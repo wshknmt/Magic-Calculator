@@ -279,6 +279,7 @@
         android:padding="10dp"
         android:text="0"
         android:textSize="30sp"
+        android:enabled="false"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout5"
         app:layout_constraintStart_toStartOf="parent" />
 
