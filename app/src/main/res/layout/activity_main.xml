@@ -275,11 +275,12 @@
         android:layout_marginStart="20dp"
         android:layout_marginBottom="28dp"
         android:ems="10"
+        android:enabled="false"
         android:inputType="text"
+        android:maxLength="19"
         android:padding="10dp"
         android:text="0"
-        android:textSize="30sp"
-        android:enabled="false"
+        android:textSize="25sp"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout5"
         app:layout_constraintStart_toStartOf="parent" />
 

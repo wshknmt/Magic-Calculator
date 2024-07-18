@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.text.InputFilter;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -18,6 +19,8 @@ import androidx.core.content.ContextCompat;
 
 import com.example.magiccalculator.databinding.ActivityMainBinding;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity {
@@ -27,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private String selectedNumber;
     private char lastCharacter = 'E'; // N - number, O - operator, E - empty, C - comma
     private Boolean pickedNumber = false;
-    private double firstNumber = 0, secondNumber = 0;
+    private BigDecimal firstNumber = BigDecimal.ZERO, secondNumber = BigDecimal.ZERO;
     private Boolean existSecondNumber = false;
     private char operator;
     private Boolean pickedOperator = false;
@@ -35,7 +38,8 @@ public class MainActivity extends AppCompatActivity {
     private Boolean commaExistSecond = false;
     private int exponentFirst = 1;
     private int exponentSecond = 1;
-    double precision = Math.pow(10, 6);
+    int precision = 8;
+    Boolean isError = false;
 //    DecimalFormat df = new DecimalFormat("#.######");
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,8 +89,8 @@ public class MainActivity extends AppCompatActivity {
                 binding.resultText.setText("0");
                 lastCharacter = 'E';
                 pickedOperator = false;
-                firstNumber = 0;
-                secondNumber = 0;
+                firstNumber = BigDecimal.ZERO;
+                secondNumber = BigDecimal.ZERO;
                 existSecondNumber = false;
                 operator = ' ';
                 pickedNumber = false;
@@ -94,12 +98,16 @@ public class MainActivity extends AppCompatActivity {
                 commaExistSecond = false;
                 exponentFirst = 1;
                 exponentSecond = 1;
+                changeResultLength(19);
+                binding.resultText.setTextSize(25);
+                isError = false;
             }
         });
 
         binding.buttonClear.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (isError) return;
                 if (lastCharacter != 'E' && binding.resultText.length() > 0) {
                     String text = binding.resultText.getText().toString();
                     binding.resultText.setText(text.substring(0, text.length() - 1));
@@ -120,28 +128,11 @@ public class MainActivity extends AppCompatActivity {
                     binding.resultText.setText(selectedNumber);
                 } else {
                     if (existSecondNumber) {
-                        double countedResult = makeCalculations();
-                        countedResult = Math.floor(countedResult * precision) / precision;
-                        String strResult = String.valueOf(countedResult);
-                        if (Math.floor(countedResult) == countedResult) {
-                            strResult = strResult.split("\\.")[0];
-                            commaExistFirst = false;
-                            exponentFirst = 1;
-                        } else {
-                            String[] fractionalParts = strResult.split("\\.");
-                            if (fractionalParts.length < 2) {
-                                commaExistFirst = false;
-                                exponentFirst = 1;
-                            } else {
-                                exponentFirst = fractionalParts[1].length();
-                            }
-                        }
-                        binding.resultText.setText(strResult);
-                        firstNumber = countedResult;
-                        secondNumber = 0;
-                        existSecondNumber = false;
-                        commaExistSecond = false;
-                        exponentSecond = 1;
+                        BigDecimal countedResult = makeCalculations();
+                        if (isError) return;
+
+                        makeResultText(countedResult);
+
                         pickedOperator = false;
                         lastCharacter = 'N';
                     }
@@ -189,6 +180,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void numberClicked(char character) {
+        if (isError) return;
         if (lastCharacter == 'E') {
             binding.resultText.setText("");
         }
@@ -197,56 +189,47 @@ public class MainActivity extends AppCompatActivity {
         binding.resultText.setText(newText);
         lastCharacter = 'N';
         if (!pickedOperator) {
-            if (!commaExistFirst)
-                firstNumber = firstNumber * 10 + character - '0';
+            if (!commaExistFirst) {
+                BigDecimal digit =  BigDecimal.valueOf(character - '0');
+                firstNumber = firstNumber.multiply(BigDecimal.TEN).add(digit);
+            }
             else {
-                double quotient = Math.pow(10, exponentFirst);
-                firstNumber = firstNumber + (character - '0') / quotient;
+                BigDecimal quotient = BigDecimal.valueOf(Math.pow(10, exponentFirst));
+                BigDecimal digit =  BigDecimal.valueOf(character - '0');
+                digit = digit.divide(quotient, precision, RoundingMode.HALF_UP);
+                firstNumber = firstNumber.add(digit);
                 exponentFirst++;
             }
         } else {
             existSecondNumber = true;
-            if (!commaExistSecond)
-                secondNumber = secondNumber * 10 + character - '0';
+            if (!commaExistSecond) {
+                BigDecimal digit =  BigDecimal.valueOf(character - '0');
+                secondNumber = secondNumber.multiply(BigDecimal.TEN).add(digit);
+            }
             else {
-                double quotient = Math.pow(10, exponentSecond);
-                secondNumber = secondNumber + (character - '0') / quotient;
+                BigDecimal quotient = BigDecimal.valueOf(Math.pow(10, exponentSecond));
+                BigDecimal digit =  BigDecimal.valueOf(character - '0');
+                digit = digit.divide(quotient, precision, RoundingMode.HALF_UP);
+                secondNumber = secondNumber.add(digit);
                 exponentSecond++;
             }
         }
     }
 
     void operatorClicked(char character) {
+        if (isError) return;
         if (lastCharacter == 'N') {
             if (!existSecondNumber) {
                 String currentText = binding.resultText.getText().toString();
                 String newText = getString(R.string.result_text_placeholder, currentText + character);
                 binding.resultText.setText(newText);
             } else {
-                double countedResult = makeCalculations();
-                countedResult = Math.floor(countedResult * precision) / precision;
-                String strResult = String.valueOf(countedResult);
-                if (Math.floor(countedResult) == countedResult) {
-                    strResult = strResult.split("\\.")[0];
-                    commaExistFirst = false;
-                    exponentFirst = 1;
-                } else {
-                    String[] fractionalParts = strResult.split("\\.");
-                    if (fractionalParts.length < 2) {
-                        commaExistFirst = false;
-                        exponentFirst = 1;
-                    } else {
-                        exponentFirst = fractionalParts[1].length();
-                    }
-                }
+                BigDecimal countedResult = makeCalculations();
+                if (isError) return;
+                String strResult = makeResultText(countedResult);
 
                 strResult += character;
                 binding.resultText.setText(strResult);
-                firstNumber = countedResult;
-                secondNumber = 0;
-                existSecondNumber = false;
-                commaExistSecond = false;
-                exponentSecond = 1;
 
             }
 
@@ -260,25 +243,76 @@ public class MainActivity extends AppCompatActivity {
         operator = character;
     }
 
-    double makeCalculations() {
-        double result = 0.0;
+    BigDecimal makeCalculations() {
+        BigDecimal result = BigDecimal.ZERO;
         switch(operator) {
             case '+':
-                result = firstNumber + secondNumber;
+                result = firstNumber.add(secondNumber);
                 break;
             case '-':
-                result = firstNumber - secondNumber;
+                result = firstNumber.subtract(secondNumber);
                 break;
             case '*':
-                result = firstNumber * secondNumber;
+                result = firstNumber.multiply(secondNumber);
                 break;
             case '/':
-                result = firstNumber / secondNumber;
+                if (secondNumber == BigDecimal.ZERO) {
+                    errorMessage("Nie dziel cholero przez 0!");
+                } else {
+                    result = firstNumber.divide(secondNumber, precision, RoundingMode.HALF_UP);
+                }
                 break;
             case '%':
-                result = firstNumber * 100 / secondNumber;
+                BigDecimal hundred = new BigDecimal(100);
+                result = firstNumber.multiply(hundred).divide(secondNumber, precision, RoundingMode.HALF_UP);
                 break;
         };
+        BigDecimal minValue =  BigDecimal.valueOf(0.0000001);
+        BigDecimal maxValue =  new BigDecimal("99999999999999999");
+        if (result.compareTo(minValue) < 0) {
+            errorMessage("Error, too small value!");
+        }
+        if (result.compareTo(maxValue) > 0) {
+            errorMessage("Error, too big value!");
+        }
         return result;
     }
+
+    String makeResultText(BigDecimal countedResult) {
+        String strResult = String.valueOf(countedResult);
+        if (countedResult.setScale(0, RoundingMode.FLOOR).equals(countedResult)) {
+            strResult = strResult.split("\\.")[0];
+            commaExistFirst = false;
+            exponentFirst = 1;
+        } else {
+            String[] fractionalParts = strResult.split("\\.");
+            if (fractionalParts.length < 2) {
+                commaExistFirst = false;
+                exponentFirst = 1;
+            } else {
+                exponentFirst = fractionalParts[1].length();
+            }
+        }
+        binding.resultText.setText(strResult);
+        firstNumber = countedResult;
+        secondNumber = BigDecimal.ZERO;
+        existSecondNumber = false;
+        commaExistSecond = false;
+        exponentSecond = 1;
+        return strResult;
+    }
+
+    void changeResultLength(int length) {
+        InputFilter[] filters = new InputFilter[1];
+        filters[0] = new InputFilter.LengthFilter(length);
+        binding.resultText.setFilters(filters);
+    }
+
+    void errorMessage(String message) {
+        isError = true;
+        changeResultLength(30);
+        binding.resultText.setTextSize(23);
+        binding.resultText.setText(message);
+    }
 }
+
