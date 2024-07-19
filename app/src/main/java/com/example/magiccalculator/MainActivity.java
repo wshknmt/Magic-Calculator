@@ -256,8 +256,9 @@ public class MainActivity extends AppCompatActivity {
                 result = firstNumber.multiply(secondNumber);
                 break;
             case '/':
-                if (secondNumber == BigDecimal.ZERO) {
-                    errorMessage("Nie dziel cholero przez 0!");
+                if (secondNumber.equals(BigDecimal.ZERO) ) {
+                    errorMessage("Cholero, don't divide by 0");
+                    return BigDecimal.TEN;
                 } else {
                     result = firstNumber.divide(secondNumber, precision, RoundingMode.HALF_UP);
                 }
