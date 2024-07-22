@@ -1,7 +1,6 @@
 package com.example.magiccalculator;
 
 import android.Manifest;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -9,9 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.InputFilter;
-import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -21,7 +18,6 @@ import com.example.magiccalculator.databinding.ActivityMainBinding;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -65,91 +61,76 @@ public class MainActivity extends AppCompatActivity {
         binding.buttonDivide.setOnClickListener(v -> operatorClicked('/'));
         binding.buttonPercent.setOnClickListener(v -> operatorClicked('%'));
 
-        binding.buttonComma.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (lastCharacter == 'N') {
-                    if (!existSecondNumber && !commaExistFirst) {
-                        commaExistFirst = true;
-                    } else if (existSecondNumber && !commaExistSecond) {
-                        commaExistSecond = true;
-                    } else return;
-                    String currentText = binding.resultText.getText().toString();
-                    String newText = getString(R.string.result_text_placeholder, currentText + '.');
-                    binding.resultText.setText(newText);
-                    lastCharacter = 'C';
+        binding.buttonComma.setOnClickListener(view1 -> {
+            if (lastCharacter == 'N') {
+                if (!existSecondNumber && !commaExistFirst) {
+                    commaExistFirst = true;
+                } else if (existSecondNumber && !commaExistSecond) {
+                    commaExistSecond = true;
+                } else return;
+                String currentText = binding.resultText.getText().toString();
+                String newText = getString(R.string.result_text_placeholder, currentText + '.');
+                binding.resultText.setText(newText);
+                lastCharacter = 'C';
 //                    commaExist = true;
-                }
             }
         });
 
-        binding.buttonAllClear.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                binding.resultText.setText("0");
-                lastCharacter = 'E';
-                pickedOperator = false;
-                firstNumber = BigDecimal.ZERO;
-                secondNumber = BigDecimal.ZERO;
-                existSecondNumber = false;
-                operator = ' ';
-                pickedNumber = false;
-                commaExistFirst = false;
-                commaExistSecond = false;
-                exponentFirst = 1;
-                exponentSecond = 1;
-                changeResultLength(19);
-                binding.resultText.setTextSize(25);
-                isError = false;
-            }
+        binding.buttonAllClear.setOnClickListener(view12 -> {
+            binding.resultText.setText("0");
+            lastCharacter = 'E';
+            pickedOperator = false;
+            firstNumber = BigDecimal.ZERO;
+            secondNumber = BigDecimal.ZERO;
+            existSecondNumber = false;
+            operator = ' ';
+            pickedNumber = false;
+            commaExistFirst = false;
+            commaExistSecond = false;
+            exponentFirst = 1;
+            exponentSecond = 1;
+            changeResultLength(19);
+            binding.resultText.setTextSize(25);
+            isError = false;
         });
 
-        binding.buttonClear.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (isError) return;
-                if (lastCharacter != 'E' && binding.resultText.length() > 0) {
-                    String text = binding.resultText.getText().toString();
-                    binding.resultText.setText(text.substring(0, text.length() - 1));
+        binding.buttonClear.setOnClickListener(view13 -> {
+            if (isError) return;
+            if (lastCharacter != 'E' && binding.resultText.length() > 0) {
+                String text = binding.resultText.getText().toString();
+                binding.resultText.setText(text.substring(0, text.length() - 1));
 //                    if ()
-                }
-                if (binding.resultText.length() == 0) {
-                    lastCharacter = 'E';
-                    binding.resultText.setText("0");
-                }
+            }
+            if (binding.resultText.length() == 0) {
+                lastCharacter = 'E';
+                binding.resultText.setText("0");
             }
         });
 
-        binding.buttonEquals.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (pickedNumber) {
+        binding.buttonEquals.setOnClickListener(view14 -> {
+            if (pickedNumber) {
 //                    String text = binding.resultText.getText().toString();
-                    binding.resultText.setText(selectedNumber);
-                } else {
-                    if (existSecondNumber) {
-                        BigDecimal countedResult = makeCalculations();
-                        if (isError) return;
+                binding.resultText.setText(selectedNumber);
+            } else {
+                if (existSecondNumber) {
+                    BigDecimal countedResult = makeCalculations();
+                    if (isError) return;
 
-                        makeResultText(countedResult);
+                    makeResultText(countedResult);
 
-                        pickedOperator = false;
-                        lastCharacter = 'N';
-                    }
+                    pickedOperator = false;
+                    lastCharacter = 'N';
                 }
             }
         });
 
-        binding.buttonEquals.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_CONTACTS}, 0);
-                }
-                Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
-                startActivityForResult(intent, PICK_CONTACT);
-                return false;
+        binding.buttonEquals.setOnLongClickListener(view15 -> {
+            if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_CONTACTS}, 0);
             }
+            Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+            startActivityForResult(intent, PICK_CONTACT);
+            return false;
         });
     }
     @Override
@@ -179,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    void numberClicked(char character) {
+    private void numberClicked(char character) {
         if (isError) return;
         if (lastCharacter == 'E') {
             binding.resultText.setText("");
@@ -216,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    void operatorClicked(char character) {
+    private void operatorClicked(char character) {
         if (isError) return;
         if (lastCharacter == 'N') {
             if (!existSecondNumber) {
@@ -243,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
         operator = character;
     }
 
-    BigDecimal makeCalculations() {
+    private BigDecimal makeCalculations() {
         BigDecimal result = BigDecimal.ZERO;
         switch(operator) {
             case '+':
@@ -267,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
                 BigDecimal hundred = new BigDecimal(100);
                 result = firstNumber.multiply(hundred).divide(secondNumber, precision, RoundingMode.HALF_UP);
                 break;
-        };
+        }
         BigDecimal minValue =  BigDecimal.valueOf(0.0000001);
         BigDecimal maxValue =  new BigDecimal("99999999999999999");
         if (result.compareTo(minValue) < 0) {
@@ -279,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
-    String makeResultText(BigDecimal countedResult) {
+    private String makeResultText(BigDecimal countedResult) {
         String strResult = String.valueOf(countedResult);
         if (countedResult.setScale(0, RoundingMode.FLOOR).equals(countedResult)) {
             strResult = strResult.split("\\.")[0];
@@ -294,6 +275,7 @@ public class MainActivity extends AppCompatActivity {
                 exponentFirst = fractionalParts[1].length();
             }
         }
+        strResult = removeUnnecessaryChar(strResult);
         binding.resultText.setText(strResult);
         firstNumber = countedResult;
         secondNumber = BigDecimal.ZERO;
@@ -303,13 +285,22 @@ public class MainActivity extends AppCompatActivity {
         return strResult;
     }
 
-    void changeResultLength(int length) {
+    private String removeUnnecessaryChar(String strResult) {
+        char lastChar = strResult.charAt(strResult.length() - 1);
+        if (lastChar == '0'  || lastChar == '.') {
+            return removeUnnecessaryChar(strResult.substring(0,strResult.length() - 1));
+        } else {
+            return strResult;
+        }
+    }
+
+    private void changeResultLength(int length) {
         InputFilter[] filters = new InputFilter[1];
         filters[0] = new InputFilter.LengthFilter(length);
         binding.resultText.setFilters(filters);
     }
 
-    void errorMessage(String message) {
+    private void errorMessage(String message) {
         isError = true;
         changeResultLength(30);
         binding.resultText.setTextSize(23);
