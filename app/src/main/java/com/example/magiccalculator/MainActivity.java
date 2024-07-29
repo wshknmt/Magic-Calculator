@@ -110,7 +110,14 @@ public class MainActivity extends AppCompatActivity {
         binding.buttonEquals.setOnClickListener(view14 -> {
             if (pickedNumber) {
 //                    String text = binding.resultText.getText().toString();
+                pickedNumber = false;
                 binding.resultText.setText(selectedNumber);
+                lastCharacter = 'N';
+                firstNumber = new BigDecimal(selectedNumber);
+                secondNumber = BigDecimal.ZERO;
+                existSecondNumber = false;
+                commaExistSecond = false;
+                exponentSecond = 1;
             } else {
                 if (existSecondNumber) {
                     BigDecimal countedResult = makeCalculations();
@@ -150,9 +157,10 @@ public class MainActivity extends AppCompatActivity {
                 Cursor cursor1 = getContentResolver().query(uriPhone, null, selection, new String[]{id}, null);
                 if (cursor1.moveToFirst()) {
                     selectedNumber = cursor1.getString(cursor1.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                    if (selectedNumber.startsWith("+48 ")) {
-                        selectedNumber = selectedNumber.substring(4); // Remove "+48" prefix
+                    if (selectedNumber.startsWith("+48")) {
+                        selectedNumber = selectedNumber.substring(3); // Remove "+48" prefix
                     }
+                    selectedNumber = selectedNumber.replace(" ", "");
                 }
                 cursor1.close();
             }
@@ -251,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
         }
         BigDecimal minValue =  BigDecimal.valueOf(0.0000001);
         BigDecimal maxValue =  new BigDecimal("99999999999999999");
-        if (result.compareTo(minValue) < 0) {
+        if (result.compareTo(minValue) < 0 && result.compareTo(BigDecimal.ZERO) > 0) {
             errorMessage("Error, too small value!");
         }
         if (result.compareTo(maxValue) > 0) {
@@ -287,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String removeUnnecessaryChar(String strResult) {
         char lastChar = strResult.charAt(strResult.length() - 1);
-        if (lastChar == '0'  || lastChar == '.') {
+        if ((lastChar == '0'  || lastChar == '.') && strResult.contains(".")) {
             return removeUnnecessaryChar(strResult.substring(0,strResult.length() - 1));
         } else {
             return strResult;
